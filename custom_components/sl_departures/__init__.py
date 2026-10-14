@@ -22,6 +22,7 @@ from .const import (
     DOMAIN,
     SCAN_INTERVAL,
 )
+from .filters import filter_departures
 
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS = ["sensor"]
@@ -54,24 +55,9 @@ class SLCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
         except (aiohttp.ClientError, TimeoutError) as err:
             raise UpdateFailed(f"Error fetching departures: {err}") from err
 
-        departures = data.get("departures", [])
-        if len(modes) > 1:
-            departures = [
-                d for d in departures if d.get("line", {}).get("transport_mode") in modes
-            ]
-        # Kommaseparerade delsträngar, matchas mot destination utan hänsyn till versaler
-        wanted = [
-            w.strip().lower()
-            for w in (conf.get(CONF_DESTINATION) or "").split(",")
-            if w.strip()
-        ]
-        if wanted:
-            departures = [
-                d
-                for d in departures
-                if any(w in (d.get("destination") or "").lower() for w in wanted)
-            ]
-        return departures
+        return filter_departures(
+            data.get("departures", []), modes, conf.get(CONF_DESTINATION)
+        )
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
