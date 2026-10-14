@@ -55,3 +55,32 @@ def test_multiple_modes():
 
 def test_modes_and_destination_combined():
     assert filter_departures(DEPS, ["BUS"], "slussen") == []
+
+
+def test_site_global_id():
+    assert _mod.site_global_id(4174) == "9091001000004174"
+
+
+def test_parse_journeys_skips_footpaths_and_counts_changes():
+    bus = lambda n, o, d: {
+        "transportation": {"disassembledName": n, "product": {"class": 5, "name": "Buss"}},
+        "origin": {"name": o, "departureTimePlanned": "2026-10-14T14:28:48Z"},
+        "destination": {"name": d, "arrivalTimeEstimated": "2026-10-14T14:55:42Z"},
+    }
+    walk = {"transportation": {"product": {"class": 100}}}
+    data = {
+        "journeys": [
+            {
+                "tripDuration": 1872,
+                "tripRtDuration": 1536,
+                "interchanges": 1,
+                "legs": [bus("418", "A", "B"), walk, bus("444", "B", "Slussen")],
+            }
+        ]
+    }
+    (j,) = _mod.parse_journeys(data)
+    assert j["interchanges"] == 1
+    assert j["duration_minutes"] == 26
+    assert j["line"] == "418"
+    assert j["arrival"] == "2026-10-14T14:55:42Z"
+    assert len(j["legs"]) == 2

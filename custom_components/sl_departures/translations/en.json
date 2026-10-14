@@ -12,6 +12,7 @@
           "site_id": "Stop",
           "transport": "Transport modes (empty = all)",
           "destination": "Destination (comma-separated, empty = all)",
+          "journey_to": "Journey end stop (shows changes and travel time)",
           "max_departures": "Max departures",
           "forecast": "Time window (minutes)"
         }
@@ -38,6 +39,7 @@
         "data": {
           "transport": "Transport modes (empty = all)",
           "destination": "Destination (comma-separated, empty = all)",
+          "journey_to": "Journey end stop (shows changes and travel time)",
           "max_departures": "Max departures",
           "forecast": "Time window (minutes)"
         }

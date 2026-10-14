@@ -12,6 +12,7 @@
           "site_id": "Hållplats",
           "transport": "Trafikslag (tomt = alla)",
           "destination": "Destination (kommaseparerad, tomt = alla)",
+          "journey_to": "Slutstation för resa (visar byten och restid)",
           "max_departures": "Max antal avgångar",
           "forecast": "Tidsfönster (minuter)"
         }
@@ -38,6 +39,7 @@
         "data": {
           "transport": "Trafikslag (tomt = alla)",
           "destination": "Destination (kommaseparerad, tomt = alla)",
+          "journey_to": "Slutstation för resa (visar byten och restid)",
           "max_departures": "Max antal avgångar",
           "forecast": "Tidsfönster (minuter)"
         }

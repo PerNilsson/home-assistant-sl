@@ -23,6 +23,7 @@ from .const import (
     API_BASE,
     CONF_DESTINATION,
     CONF_FORECAST,
+    CONF_JOURNEY_TO,
     CONF_MAX_DEPARTURES,
     CONF_SEARCH,
     CONF_SITE_ID,
@@ -54,6 +55,7 @@ def _settings_schema(defaults: dict[str, Any]) -> dict:
     return {
         vol.Optional(CONF_TRANSPORT, default=defaults.get(CONF_TRANSPORT, [])): _transport_selector(),
         vol.Optional(CONF_DESTINATION, default=defaults.get(CONF_DESTINATION, "")): str,
+        vol.Optional(CONF_JOURNEY_TO, default=defaults.get(CONF_JOURNEY_TO, "")): str,
         vol.Optional(
             CONF_MAX_DEPARTURES, default=defaults.get(CONF_MAX_DEPARTURES, DEFAULT_MAX_DEPARTURES)
         ): _number(1, 30),
@@ -125,6 +127,7 @@ class SLConfigFlow(ConfigFlow, domain=DOMAIN):
                     CONF_SITE_NAME: name,
                     CONF_TRANSPORT: user_input.get(CONF_TRANSPORT, []),
                     CONF_DESTINATION: user_input.get(CONF_DESTINATION, ""),
+                    CONF_JOURNEY_TO: user_input.get(CONF_JOURNEY_TO, ""),
                     CONF_MAX_DEPARTURES: int(user_input[CONF_MAX_DEPARTURES]),
                     CONF_FORECAST: int(user_input[CONF_FORECAST]),
                 },

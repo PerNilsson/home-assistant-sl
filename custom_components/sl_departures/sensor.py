@@ -5,8 +5,9 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -15,6 +16,7 @@ from homeassistant.util import dt as dt_util
 
 from . import SLCoordinator
 from .const import (
+    CONF_JOURNEY_TO,
     CONF_MAX_DEPARTURES,
     CONF_SITE_NAME,
     DEFAULT_MAX_DEPARTURES,
@@ -34,7 +36,12 @@ def _parse(value: str | None) -> datetime | None:
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    async_add_entities([SLNextDepartureSensor(hass.data[DOMAIN][entry.entry_id], entry)])
+    coordinator = hass.data[DOMAIN][entry.entry_id]
+    entities: list[SensorEntity] = [SLNextDepartureSensor(coordinator, entry)]
+    conf = {**entry.data, **entry.options}
+    if (conf.get(CONF_JOURNEY_TO) or "").strip():
+        entities += [SLInterchangesSensor(coordinator, entry), SLTravelTimeSensor(coordinator, entry)]
+    async_add_entities(entities)
 
 
 class SLNextDepartureSensor(CoordinatorEntity[SLCoordinator], SensorEntity):
@@ -68,6 +75,9 @@ class SLNextDepartureSensor(CoordinatorEntity[SLCoordinator], SensorEntity):
     def extra_state_attributes(self) -> dict[str, Any]:
         items = []
         for d in self._departures():
+            if "interchanges" in d:
+                items.append(d)
+                continue
             line = d.get("line", {})
             items.append(
                 {
@@ -83,3 +93,38 @@ class SLNextDepartureSensor(CoordinatorEntity[SLCoordinator], SensorEntity):
                 }
             )
         return {"departures": items}
+
+
+class _SLJourneySensor(CoordinatorEntity[SLCoordinator], SensorEntity):
+    _attr_has_entity_name = True
+    _key = ""
+
+    def __init__(self, coordinator: SLCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{entry.entry_id}_{self._key}"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, entry.entry_id)},
+            name=entry.data[CONF_SITE_NAME],
+            manufacturer="SL",
+            entry_type=DeviceEntryType.SERVICE,
+        )
+
+    @property
+    def native_value(self) -> int | None:
+        data = self.coordinator.data or []
+        return data[0].get(self._key) if data else None
+
+
+class SLInterchangesSensor(_SLJourneySensor):
+    _key = "interchanges"
+    _attr_name = "Interchanges"
+    _attr_icon = "mdi:swap-horizontal"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+
+class SLTravelTimeSensor(_SLJourneySensor):
+    _key = "duration_minutes"
+    _attr_name = "Travel time"
+    _attr_device_class = SensorDeviceClass.DURATION
+    _attr_native_unit_of_measurement = UnitOfTime.MINUTES
+    _attr_state_class = SensorStateClass.MEASUREMENT

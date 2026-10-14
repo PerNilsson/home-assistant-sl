@@ -21,6 +21,7 @@ Kopiera mappen `custom_components/sl_departures` till `config/custom_components/
 3. Välj hållplats i listan och ange vid behov:
    - **Trafikslag**: buss, tunnelbana, tåg, spårvagn, båt (tomt = alla)
    - **Destination**: visar bara avgångar vars destination innehåller texten, t.ex. `Odenplan` eller `Odenplan, Kungsträdgården` (tomt = alla)
+   - **Slutstation för resa**: ange en valfri slutstation (t.ex. `Slussen`) för att få resor från vald hållplats dit, även om det inte är linjens ändstation. Sensorn visar då avgång, antal byten och total restid (tomt = vanliga avgångar)
    - **Max antal avgångar**
    - **Tidsfönster** i minuter
 4. Upprepa för fler hållplatser.
@@ -56,6 +57,10 @@ content: >
 
 Byt ut entitets-ID mot din egen sensor.
 
+### Resor med slutstation
+
+Om **Slutstation för resa** är ifylld får hållplatsen även sensorerna `Interchanges` (antal byten) och `Travel time` (total restid i minuter) för den första resan. Attributet `departures` innehåller då för varje resa: `line`, `transport_mode`, `scheduled`, `expected`, `arrival`, `platform`, `interchanges`, `duration_minutes` och `legs` (delsträckor med `line`, `from`, `to`).
+
 ## Licens
 
 Se [LICENSE](LICENSE).
@@ -85,6 +90,7 @@ Copy the folder `custom_components/sl_departures` to `config/custom_components/`
 3. Pick the stop from the list and optionally set:
    - **Transport modes**: bus, metro, train, tram, ship (empty = all)
    - **Destination**: only shows departures whose destination contains the text, e.g. `Odenplan` or `Odenplan, Kungsträdgården` (empty = all)
+   - **Journey end stop**: enter any stop (e.g. `Slussen`) to get journeys from the selected stop to it, even if it is not the line's terminus. The sensor then shows departure, number of changes and total travel time (empty = regular departures)
    - **Max departures**
    - **Time window** in minutes
 4. Repeat for more stops.
@@ -119,6 +125,10 @@ content: >
 ```
 
 Replace the entity ID with your own sensor.
+
+### Journeys with an end stop
+
+If **Journey end stop** is set, the stop also gets the sensors `Interchanges` (number of changes) and `Travel time` (total travel time in minutes) for the first journey. The `departures` attribute then contains, for each journey: `line`, `transport_mode`, `scheduled`, `expected`, `arrival`, `platform`, `interchanges`, `duration_minutes` and `legs` (parts with `line`, `from`, `to`).
 
 ## License
 
