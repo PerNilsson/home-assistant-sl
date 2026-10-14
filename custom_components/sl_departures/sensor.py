@@ -18,7 +18,6 @@ from . import SLCoordinator
 from .const import (
     CONF_JOURNEY_TO,
     CONF_MAX_DEPARTURES,
-    CONF_SITE_NAME,
     DEFAULT_MAX_DEPARTURES,
     DOMAIN,
 )
@@ -56,7 +55,7 @@ class SLNextDepartureSensor(CoordinatorEntity[SLCoordinator], SensorEntity):
         self._attr_unique_id = f"{entry.entry_id}_next_departure"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
-            name=entry.data[CONF_SITE_NAME],
+            name=entry.title,
             manufacturer="SL",
             entry_type=DeviceEntryType.SERVICE,
         )
@@ -104,7 +103,7 @@ class _SLJourneySensor(CoordinatorEntity[SLCoordinator], SensorEntity):
         self._attr_unique_id = f"{entry.entry_id}_{self._key}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
-            name=entry.data[CONF_SITE_NAME],
+            name=entry.title,
             manufacturer="SL",
             entry_type=DeviceEntryType.SERVICE,
         )

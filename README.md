@@ -24,7 +24,7 @@ Kopiera mappen `custom_components/sl_departures` till `config/custom_components/
    - **Slutstation för resa**: ange en valfri slutstation (t.ex. `Slussen`) för att få resor från vald hållplats dit, även om det inte är linjens ändstation. Sensorn visar då avgång, antal byten och total restid (tomt = vanliga avgångar)
    - **Max antal avgångar**
    - **Tidsfönster** i minuter
-4. Upprepa för fler hållplatser.
+4. Upprepa för fler hållplatser. Samma hållplats kan läggas till flera gånger med olika **Slutstation för resa**; varje post får egna sensorer och heter t.ex. `Mensättra → Slussen`.
 
 ### Ändra hållplats eller filter
 
@@ -93,7 +93,7 @@ Copy the folder `custom_components/sl_departures` to `config/custom_components/`
    - **Journey end stop**: enter any stop (e.g. `Slussen`) to get journeys from the selected stop to it, even if it is not the line's terminus. The sensor then shows departure, number of changes and total travel time (empty = regular departures)
    - **Max departures**
    - **Time window** in minutes
-4. Repeat for more stops.
+4. Repeat for more stops. The same stop can be added several times with different **Journey end stop** values; each entry gets its own sensors and is named e.g. `Mensättra → Slussen`.
 
 ### Change stop or filters
 

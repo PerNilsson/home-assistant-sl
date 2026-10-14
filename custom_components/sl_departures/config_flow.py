@@ -65,6 +65,15 @@ def _settings_schema(defaults: dict[str, Any]) -> dict:
     }
 
 
+def _unique_id(site_id: int, journey_to: str) -> str:
+    return f"{site_id}:{journey_to.strip().lower()}"
+
+
+def _title(name: str, journey_to: str) -> str:
+    journey_to = journey_to.strip()
+    return f"{name} → {journey_to}" if journey_to else name
+
+
 def _site_selector(sites: list[dict[str, Any]]) -> SelectSelector:
     options = [SelectOptionDict(value=str(s["id"]), label=s["name"]) for s in sites]
     return SelectSelector(SelectSelectorConfig(options=options, mode=SelectSelectorMode.DROPDOWN))
@@ -118,16 +127,17 @@ class SLConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             site_id = int(user_input[CONF_SITE_ID])
             name = next(s["name"] for s in self._sites if s["id"] == site_id)
-            await self.async_set_unique_id(str(site_id))
+            journey_to = user_input.get(CONF_JOURNEY_TO, "")
+            await self.async_set_unique_id(_unique_id(site_id, journey_to))
             self._abort_if_unique_id_configured()
             return self.async_create_entry(
-                title=name,
+                title=_title(name, journey_to),
                 data={
                     CONF_SITE_ID: site_id,
                     CONF_SITE_NAME: name,
                     CONF_TRANSPORT: user_input.get(CONF_TRANSPORT, []),
                     CONF_DESTINATION: user_input.get(CONF_DESTINATION, ""),
-                    CONF_JOURNEY_TO: user_input.get(CONF_JOURNEY_TO, ""),
+                    CONF_JOURNEY_TO: journey_to,
                     CONF_MAX_DEPARTURES: int(user_input[CONF_MAX_DEPARTURES]),
                     CONF_FORECAST: int(user_input[CONF_FORECAST]),
                 },
@@ -173,21 +183,12 @@ class SLOptionsFlow(OptionsFlow):
         errors: dict[str, str] = {}
         if user_input is not None:
             site_id = int(user_input[CONF_SITE_ID])
-            taken = any(
-                e.entry_id != self.config_entry.entry_id and e.data.get(CONF_SITE_ID) == site_id
-                for e in self.hass.config_entries.async_entries(DOMAIN)
+            name = next(s["name"] for s in self._sites if s["id"] == site_id)
+            self.hass.config_entries.async_update_entry(
+                self.config_entry,
+                data={**self.config_entry.data, CONF_SITE_ID: site_id, CONF_SITE_NAME: name},
             )
-            if taken:
-                errors["base"] = "already_configured"
-            else:
-                name = next(s["name"] for s in self._sites if s["id"] == site_id)
-                self.hass.config_entries.async_update_entry(
-                    self.config_entry,
-                    title=name,
-                    unique_id=str(site_id),
-                    data={**self.config_entry.data, CONF_SITE_ID: site_id, CONF_SITE_NAME: name},
-                )
-                return await self.async_step_filters()
+            return await self.async_step_filters()
 
         return self.async_show_form(
             step_id="select",
@@ -196,12 +197,28 @@ class SLOptionsFlow(OptionsFlow):
         )
 
     async def async_step_filters(self, user_input: dict[str, Any] | None = None):
+        errors: dict[str, str] = {}
+        current = {**self.config_entry.data, **self.config_entry.options}
         if user_input is not None:
             user_input[CONF_MAX_DEPARTURES] = int(user_input[CONF_MAX_DEPARTURES])
             user_input[CONF_FORECAST] = int(user_input[CONF_FORECAST])
-            return self.async_create_entry(data=user_input)
+            site_id = self.config_entry.data[CONF_SITE_ID]
+            journey_to = user_input.get(CONF_JOURNEY_TO, "")
+            uid = _unique_id(site_id, journey_to)
+            if any(
+                e.entry_id != self.config_entry.entry_id and e.unique_id == uid
+                for e in self.hass.config_entries.async_entries(DOMAIN)
+            ):
+                errors["base"] = "already_configured"
+                current = {**current, **user_input}
+            else:
+                self.hass.config_entries.async_update_entry(
+                    self.config_entry,
+                    title=_title(self.config_entry.data[CONF_SITE_NAME], journey_to),
+                    unique_id=uid,
+                )
+                return self.async_create_entry(data=user_input)
 
-        current = {**self.config_entry.data, **self.config_entry.options}
         return self.async_show_form(
-            step_id="filters", data_schema=vol.Schema(_settings_schema(current))
+            step_id="filters", data_schema=vol.Schema(_settings_schema(current)), errors=errors
         )
