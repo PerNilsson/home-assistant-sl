@@ -33,6 +33,12 @@ def parse_journeys(data: dict[str, Any]) -> list[dict[str, Any]]:
                 "scheduled": origin.get("departureTimePlanned"),
                 "expected": origin.get("departureTimeEstimated") or origin.get("departureTimePlanned"),
                 "arrival": dest.get("arrivalTimeEstimated") or dest.get("arrivalTimePlanned"),
+                "destination": dest.get("disassembledName") or dest.get("name"),
+                "interchange_stops": [
+                    (leg.get("destination") or {}).get("disassembledName")
+                    or (leg.get("destination") or {}).get("name")
+                    for leg in legs[:-1]
+                ],
                 "platform": (origin.get("properties") or {}).get("platformName"),
                 "interchanges": int(journey.get("interchanges") or 0),
                 "duration_minutes": round(seconds / 60),

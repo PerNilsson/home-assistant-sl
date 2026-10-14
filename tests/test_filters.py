@@ -84,3 +84,5 @@ def test_parse_journeys_skips_footpaths_and_counts_changes():
     assert j["line"] == "418"
     assert j["arrival"] == "2026-10-14T14:55:42Z"
     assert len(j["legs"]) == 2
+    assert j["destination"] == "Slussen"
+    assert j["interchange_stops"] == ["B"]

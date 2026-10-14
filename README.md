@@ -59,7 +59,7 @@ Byt ut entitets-ID mot din egen sensor.
 
 ### Resor med slutstation
 
-Om **Slutstation för resa** är ifylld får hållplatsen även sensorerna `Interchanges` (antal byten) och `Travel time` (total restid i minuter) för den första resan. Attributet `departures` innehåller då för varje resa: `line`, `transport_mode`, `scheduled`, `expected`, `arrival`, `platform`, `interchanges`, `duration_minutes` och `legs` (delsträckor med `line`, `from`, `to`).
+Om **Slutstation för resa** är ifylld får hållplatsen även sensorerna `Interchanges` (antal byten) och `Travel time` (total restid i minuter) för den första resan. Attributet `departures` innehåller då för varje resa: `line`, `transport_mode`, `scheduled`, `expected`, `arrival`, `destination` (slutstation), `interchange_stops` (stationer där du byter), `platform`, `interchanges`, `duration_minutes` och `legs` (delsträckor med `line`, `from`, `to`).
 
 ## Licens
 
@@ -128,7 +128,7 @@ Replace the entity ID with your own sensor.
 
 ### Journeys with an end stop
 
-If **Journey end stop** is set, the stop also gets the sensors `Interchanges` (number of changes) and `Travel time` (total travel time in minutes) for the first journey. The `departures` attribute then contains, for each journey: `line`, `transport_mode`, `scheduled`, `expected`, `arrival`, `platform`, `interchanges`, `duration_minutes` and `legs` (parts with `line`, `from`, `to`).
+If **Journey end stop** is set, the stop also gets the sensors `Interchanges` (number of changes) and `Travel time` (total travel time in minutes) for the first journey. The `departures` attribute then contains, for each journey: `line`, `transport_mode`, `scheduled`, `expected`, `arrival`, `destination` (end stop), `interchange_stops` (stops where you change), `platform`, `interchanges`, `duration_minutes` and `legs` (parts with `line`, `from`, `to`).
 
 ## License
 
