@@ -14,6 +14,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .const import (
     API_BASE,
+    CONF_DESTINATION,
     CONF_FORECAST,
     CONF_SITE_ID,
     CONF_TRANSPORT,
@@ -57,6 +58,18 @@ class SLCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
         if len(modes) > 1:
             departures = [
                 d for d in departures if d.get("line", {}).get("transport_mode") in modes
+            ]
+        # Kommaseparerade delsträngar, matchas mot destination utan hänsyn till versaler
+        wanted = [
+            w.strip().lower()
+            for w in (conf.get(CONF_DESTINATION) or "").split(",")
+            if w.strip()
+        ]
+        if wanted:
+            departures = [
+                d
+                for d in departures
+                if any(w in (d.get("destination") or "").lower() for w in wanted)
             ]
         return departures
 

@@ -12,6 +12,7 @@ CONF_SEARCH = "search"
 CONF_TRANSPORT = "transport"
 CONF_MAX_DEPARTURES = "max_departures"
 CONF_FORECAST = "forecast"
+CONF_DESTINATION = "destination"
 
 TRANSPORT_MODES = ["BUS", "METRO", "TRAIN", "TRAM", "SHIP"]
 

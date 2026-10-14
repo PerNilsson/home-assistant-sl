@@ -20,6 +20,7 @@ Kopiera mappen `custom_components/sl_departures` till `config/custom_components/
 2. Skriv in hela eller delar av hållplatsens namn, t.ex. `Slussen`.
 3. Välj hållplats i listan och ange vid behov:
    - **Trafikslag**: buss, tunnelbana, tåg, spårvagn, båt (tomt = alla)
+   - **Destination**: visar bara avgångar vars destination innehåller texten, t.ex. `Odenplan` eller `Odenplan, Kungsträdgården` (tomt = alla)
    - **Max antal avgångar**
    - **Tidsfönster** i minuter
 4. Upprepa för fler hållplatser. Inställningarna kan ändras senare via integrationens **Alternativ**.

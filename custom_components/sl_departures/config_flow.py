@@ -21,6 +21,7 @@ from homeassistant.helpers.selector import (
 
 from .const import (
     API_BASE,
+    CONF_DESTINATION,
     CONF_FORECAST,
     CONF_MAX_DEPARTURES,
     CONF_SEARCH,
@@ -52,6 +53,7 @@ def _number(min_: int, max_: int) -> NumberSelector:
 def _settings_schema(defaults: dict[str, Any]) -> dict:
     return {
         vol.Optional(CONF_TRANSPORT, default=defaults.get(CONF_TRANSPORT, [])): _transport_selector(),
+        vol.Optional(CONF_DESTINATION, default=defaults.get(CONF_DESTINATION, "")): str,
         vol.Optional(
             CONF_MAX_DEPARTURES, default=defaults.get(CONF_MAX_DEPARTURES, DEFAULT_MAX_DEPARTURES)
         ): _number(1, 30),
@@ -111,6 +113,7 @@ class SLConfigFlow(ConfigFlow, domain=DOMAIN):
                     CONF_SITE_ID: site_id,
                     CONF_SITE_NAME: name,
                     CONF_TRANSPORT: user_input.get(CONF_TRANSPORT, []),
+                    CONF_DESTINATION: user_input.get(CONF_DESTINATION, ""),
                     CONF_MAX_DEPARTURES: int(user_input[CONF_MAX_DEPARTURES]),
                     CONF_FORECAST: int(user_input[CONF_FORECAST]),
                 },
