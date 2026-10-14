@@ -16,7 +16,6 @@ from homeassistant.util import dt as dt_util
 from . import SLCoordinator
 from .const import (
     CONF_MAX_DEPARTURES,
-    CONF_SITE_ID,
     CONF_SITE_NAME,
     DEFAULT_MAX_DEPARTURES,
     DOMAIN,
@@ -47,9 +46,9 @@ class SLNextDepartureSensor(CoordinatorEntity[SLCoordinator], SensorEntity):
     def __init__(self, coordinator: SLCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator)
         self._entry = entry
-        self._attr_unique_id = f"{entry.data[CONF_SITE_ID]}_next_departure"
+        self._attr_unique_id = f"{entry.entry_id}_next_departure"
         self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, str(entry.data[CONF_SITE_ID]))},
+            identifiers={(DOMAIN, entry.entry_id)},
             name=entry.data[CONF_SITE_NAME],
             manufacturer="SL",
             entry_type=DeviceEntryType.SERVICE,

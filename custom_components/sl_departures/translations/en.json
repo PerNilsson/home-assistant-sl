@@ -26,6 +26,15 @@
   "options": {
     "step": {
       "init": {
+        "title": "Change stop",
+        "description": "Current stop: {current}. Enter a new stop name to change it, or leave empty to keep it.",
+        "data": { "search": "New stop name" }
+      },
+      "select": {
+        "title": "Select stop",
+        "data": { "site_id": "Stop" }
+      },
+      "filters": {
         "data": {
           "transport": "Transport modes (empty = all)",
           "destination": "Destination (comma-separated, empty = all)",
@@ -33,6 +42,11 @@
           "forecast": "Time window (minutes)"
         }
       }
+    },
+    "error": {
+      "cannot_connect": "Could not reach the SL API.",
+      "no_results": "No stops matched your search.",
+      "already_configured": "This stop is already configured."
     }
   },
   "selector": {

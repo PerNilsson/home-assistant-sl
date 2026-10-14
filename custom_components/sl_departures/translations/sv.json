@@ -26,6 +26,15 @@
   "options": {
     "step": {
       "init": {
+        "title": "Ändra hållplats",
+        "description": "Nuvarande hållplats: {current}. Ange ett nytt hållplatsnamn för att byta, eller lämna tomt för att behålla.",
+        "data": { "search": "Nytt hållplatsnamn" }
+      },
+      "select": {
+        "title": "Välj hållplats",
+        "data": { "site_id": "Hållplats" }
+      },
+      "filters": {
         "data": {
           "transport": "Trafikslag (tomt = alla)",
           "destination": "Destination (kommaseparerad, tomt = alla)",
@@ -33,6 +42,11 @@
           "forecast": "Tidsfönster (minuter)"
         }
       }
+    },
+    "error": {
+      "cannot_connect": "Kunde inte nå SL:s API.",
+      "no_results": "Inga hållplatser matchade sökningen.",
+      "already_configured": "Hållplatsen är redan konfigurerad."
     }
   },
   "selector": {

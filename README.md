@@ -23,7 +23,11 @@ Kopiera mappen `custom_components/sl_departures` till `config/custom_components/
    - **Destination**: visar bara avgångar vars destination innehåller texten, t.ex. `Odenplan` eller `Odenplan, Kungsträdgården` (tomt = alla)
    - **Max antal avgångar**
    - **Tidsfönster** i minuter
-4. Upprepa för fler hållplatser. Inställningarna kan ändras senare via integrationens **Alternativ**.
+4. Upprepa för fler hållplatser.
+
+### Ändra hållplats eller filter
+
+Öppna integrationen och välj **Alternativ**. Skriv ett nytt hållplatsnamn för att byta hållplats, eller lämna fältet tomt för att behålla nuvarande. Därefter kan du ändra trafikslag, destination, antal avgångar och tidsfönster. Sensorn behåller sitt entitets-ID.
 
 ## Sensor
 
@@ -55,3 +59,67 @@ Byt ut entitets-ID mot din egen sensor.
 ## Licens
 
 Se [LICENSE](LICENSE).
+
+---
+
+# SL Departures for Home Assistant
+
+Custom integration (HACS) that shows departure times for SL in Stockholm. The stop and filters are set in the Home Assistant UI. No API key is needed.
+
+Data is fetched every minute from SL's open API (`transport.integration.sl.se`).
+
+## Installation via HACS
+
+1. Open HACS → Integrations → menu in the top right → **Custom repositories**.
+2. Add the URL of this repo with category **Integration**.
+3. Search for **SL Departures**, download it and restart Home Assistant.
+
+### Manual installation
+
+Copy the folder `custom_components/sl_departures` to `config/custom_components/` and restart Home Assistant.
+
+## Configuration
+
+1. Go to **Settings → Devices & services → Add integration** and choose **SL Departures**.
+2. Enter all or part of the stop name, e.g. `Slussen`.
+3. Pick the stop from the list and optionally set:
+   - **Transport modes**: bus, metro, train, tram, ship (empty = all)
+   - **Destination**: only shows departures whose destination contains the text, e.g. `Odenplan` or `Odenplan, Kungsträdgården` (empty = all)
+   - **Max departures**
+   - **Time window** in minutes
+4. Repeat for more stops.
+
+### Change stop or filters
+
+Open the integration and choose **Configure**. Enter a new stop name to change stop, or leave the field empty to keep the current one. You can then change transport modes, destination, number of departures and time window. The sensor keeps its entity ID.
+
+## Sensor
+
+Each stop gets a `Next departure` sensor (timestamp of the next departure). All departures are available in the `departures` attribute:
+
+| Field | Description |
+| --- | --- |
+| `line` | Line number |
+| `transport_mode` | Transport mode |
+| `destination` | Destination |
+| `display` | Text shown on the sign (e.g. `3 min`) |
+| `scheduled` / `expected` | Scheduled / expected departure time |
+| `state` | Departure status |
+| `platform` | Platform |
+| `deviations` | Deviation messages |
+
+### Example: Lovelace card
+
+```yaml
+type: markdown
+content: >
+  {% for d in state_attr('sensor.slussen_next_departure', 'departures') %}
+  **{{ d.line }}** {{ d.destination }} – {{ d.display }}
+  {% endfor %}
+```
+
+Replace the entity ID with your own sensor.
+
+## License
+
+See [LICENSE](LICENSE).

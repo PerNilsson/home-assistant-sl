@@ -8,7 +8,7 @@ import aiohttp
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlow
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import (
     NumberSelector,
@@ -63,6 +63,26 @@ def _settings_schema(defaults: dict[str, Any]) -> dict:
     }
 
 
+def _site_selector(sites: list[dict[str, Any]]) -> SelectSelector:
+    options = [SelectOptionDict(value=str(s["id"]), label=s["name"]) for s in sites]
+    return SelectSelector(SelectSelectorConfig(options=options, mode=SelectSelectorMode.DROPDOWN))
+
+
+async def _search_sites(hass: HomeAssistant, query: str) -> list[dict[str, Any]]:
+    """Return up to 50 sites whose name or alias contains the query."""
+    query = query.strip().lower()
+    session = async_get_clientsession(hass)
+    async with session.get(f"{API_BASE}/sites", params={"expand": "false"}) as resp:
+        resp.raise_for_status()
+        sites = await resp.json()
+    return [
+        s
+        for s in sites
+        if query in s.get("name", "").lower()
+        or any(query in a.lower() for a in (s.get("alias") or []))
+    ][:50]
+
+
 class SLConfigFlow(ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
@@ -77,20 +97,11 @@ class SLConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input: dict[str, Any] | None = None):
         errors: dict[str, str] = {}
         if user_input is not None:
-            query = user_input[CONF_SEARCH].strip().lower()
             try:
-                session = async_get_clientsession(self.hass)
-                async with session.get(f"{API_BASE}/sites", params={"expand": "false"}) as resp:
-                    resp.raise_for_status()
-                    sites = await resp.json()
+                self._sites = await _search_sites(self.hass, user_input[CONF_SEARCH])
             except (aiohttp.ClientError, TimeoutError):
                 errors["base"] = "cannot_connect"
             else:
-                self._sites = [
-                    s
-                    for s in sites
-                    if query in s.get("name", "").lower() or query in (s.get("alias") or [""])[0].lower()
-                ][:50]
                 if self._sites:
                     return await self.async_step_select()
                 errors["base"] = "no_results"
@@ -119,18 +130,69 @@ class SLConfigFlow(ConfigFlow, domain=DOMAIN):
                 },
             )
 
-        options = [SelectOptionDict(value=str(s["id"]), label=s["name"]) for s in self._sites]
         schema = {
-            vol.Required(CONF_SITE_ID): SelectSelector(
-                SelectSelectorConfig(options=options, mode=SelectSelectorMode.DROPDOWN)
-            ),
+            vol.Required(CONF_SITE_ID): _site_selector(self._sites),
             **_settings_schema({}),
         }
         return self.async_show_form(step_id="select", data_schema=vol.Schema(schema))
 
 
 class SLOptionsFlow(OptionsFlow):
+    """Change stop (optional) and filters."""
+
+    def __init__(self) -> None:
+        self._sites: list[dict[str, Any]] = []
+
     async def async_step_init(self, user_input: dict[str, Any] | None = None):
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            query = user_input.get(CONF_SEARCH, "").strip()
+            if not query:
+                # Tomt sökfält = behåll nuvarande hållplats
+                return await self.async_step_filters()
+            try:
+                self._sites = await _search_sites(self.hass, query)
+            except (aiohttp.ClientError, TimeoutError):
+                errors["base"] = "cannot_connect"
+            else:
+                if self._sites:
+                    return await self.async_step_select()
+                errors["base"] = "no_results"
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema({vol.Optional(CONF_SEARCH, default=""): str}),
+            description_placeholders={"current": self.config_entry.data[CONF_SITE_NAME]},
+            errors=errors,
+        )
+
+    async def async_step_select(self, user_input: dict[str, Any] | None = None):
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            site_id = int(user_input[CONF_SITE_ID])
+            taken = any(
+                e.entry_id != self.config_entry.entry_id and e.data.get(CONF_SITE_ID) == site_id
+                for e in self.hass.config_entries.async_entries(DOMAIN)
+            )
+            if taken:
+                errors["base"] = "already_configured"
+            else:
+                name = next(s["name"] for s in self._sites if s["id"] == site_id)
+                self.hass.config_entries.async_update_entry(
+                    self.config_entry,
+                    title=name,
+                    unique_id=str(site_id),
+                    data={**self.config_entry.data, CONF_SITE_ID: site_id, CONF_SITE_NAME: name},
+                )
+                return await self.async_step_filters()
+
+        return self.async_show_form(
+            step_id="select",
+            data_schema=vol.Schema({vol.Required(CONF_SITE_ID): _site_selector(self._sites)}),
+            errors=errors,
+        )
+
+    async def async_step_filters(self, user_input: dict[str, Any] | None = None):
         if user_input is not None:
             user_input[CONF_MAX_DEPARTURES] = int(user_input[CONF_MAX_DEPARTURES])
             user_input[CONF_FORECAST] = int(user_input[CONF_FORECAST])
@@ -138,5 +200,5 @@ class SLOptionsFlow(OptionsFlow):
 
         current = {**self.config_entry.data, **self.config_entry.options}
         return self.async_show_form(
-            step_id="init", data_schema=vol.Schema(_settings_schema(current))
+            step_id="filters", data_schema=vol.Schema(_settings_schema(current))
         )
