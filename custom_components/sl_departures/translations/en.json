@@ -1,0 +1,47 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Find stop",
+        "description": "Enter part of the station or stop name.",
+        "data": { "search": "Stop name" }
+      },
+      "select": {
+        "title": "Select stop",
+        "data": {
+          "site_id": "Stop",
+          "transport": "Transport modes (empty = all)",
+          "max_departures": "Max departures",
+          "forecast": "Time window (minutes)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not reach the SL API.",
+      "no_results": "No stops matched your search."
+    },
+    "abort": { "already_configured": "This stop is already configured." }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "transport": "Transport modes (empty = all)",
+          "max_departures": "Max departures",
+          "forecast": "Time window (minutes)"
+        }
+      }
+    }
+  },
+  "selector": {
+    "transport": {
+      "options": {
+        "BUS": "Bus",
+        "METRO": "Metro",
+        "TRAIN": "Train",
+        "TRAM": "Tram",
+        "SHIP": "Ship"
+      }
+    }
+  }
+}

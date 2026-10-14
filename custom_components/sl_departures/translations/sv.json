@@ -1,0 +1,47 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Hitta hållplats",
+        "description": "Ange hela eller delar av stationens/hållplatsens namn.",
+        "data": { "search": "Hållplatsnamn" }
+      },
+      "select": {
+        "title": "Välj hållplats",
+        "data": {
+          "site_id": "Hållplats",
+          "transport": "Trafikslag (tomt = alla)",
+          "max_departures": "Max antal avgångar",
+          "forecast": "Tidsfönster (minuter)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Kunde inte nå SL:s API.",
+      "no_results": "Inga hållplatser matchade sökningen."
+    },
+    "abort": { "already_configured": "Hållplatsen är redan konfigurerad." }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "transport": "Trafikslag (tomt = alla)",
+          "max_departures": "Max antal avgångar",
+          "forecast": "Tidsfönster (minuter)"
+        }
+      }
+    }
+  },
+  "selector": {
+    "transport": {
+      "options": {
+        "BUS": "Buss",
+        "METRO": "Tunnelbana",
+        "TRAIN": "Tåg",
+        "TRAM": "Spårvagn",
+        "SHIP": "Båt"
+      }
+    }
+  }
+}
