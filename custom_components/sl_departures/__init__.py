@@ -71,7 +71,7 @@ class SLCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
                 "name_origin": site_global_id(conf[CONF_SITE_ID]),
                 "type_destination": "any",
                 "name_destination": dest_id,
-                "calc_number_of_trips": conf.get(CONF_MAX_DEPARTURES, DEFAULT_MAX_DEPARTURES),
+                "calc_number_of_trips": 3,  # API avvisar > 3
             }
             session = async_get_clientsession(self.hass)
             async with session.get(
