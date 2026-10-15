@@ -6,7 +6,7 @@ Data hämtas varje minut från SL:s öppna API (`transport.integration.sl.se`).
 
 ## Installation via HACS
 
-1. Öppna HACS → Integrationer → menyn uppe till höger → **Anpassade databaser**.
+1. Öppna HACS → Integrationer → menyn uppe till höger → **Custom repositories**.
 2. Lägg till adressen till detta repo med kategori **Integration**.
 3. Sök efter **SL Departures**, ladda ner och starta om Home Assistant.
 
