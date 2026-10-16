@@ -50,18 +50,25 @@ Varje hållplats får sensorn `Next departure` (tidsstämpel för nästa avgång
 ```yaml
 type: markdown
 content: |-
-  {% set departures = state_attr('sensor.odenplan_next_departure', 'departures') or [] %}
-  {% if departures %}
-  {% for d in departures %}
-  - **{{ as_timestamp(d.get('expected') or d.get('scheduled')) | timestamp_custom('%H:%M', true) }}** linje {{ d.get('line', '?') }}
-    {% if d.get('arrival') %}ankomst {{ as_timestamp(d.get('arrival')) | timestamp_custom('%H:%M', true) }} · {{ d.get('duration_minutes') }} min · {{ d.get('interchanges', 0) }} byten{% if d.get('interchange_stops') %} ({{ d.get('interchange_stops') | join(', ') }}){% endif %}{% else %}{{ d.get('destination', '') }}{% endif %}
+  {% macro resor(entity, rubrik) %}
+  ### {{ rubrik }}
+  {% set avganger = state_attr(entity, 'departures') or [] %}
+  {% if avganger %}
+  {% for d in avganger %}
+  {% set tid = d.get('expected') or d.get('scheduled') %}
+  - **{{ as_timestamp(tid) | timestamp_custom('%H:%M', true) if tid else '--:--' }}** linje {{ d.get('line', '?') }}{% if d.get('arrival') %} → ankomst {{ as_timestamp(d.get('arrival')) | timestamp_custom('%H:%M', true) }}{% elif d.get('destination') %} → {{ d.get('destination') }}{% endif %}{% if d.get('duration_minutes') is not none %} · {{ d.get('duration_minutes') }} min{% endif %}{% if d.get('interchanges') is not none %} · {{ d.get('interchanges') }} byten{% if d.get('interchange_stops') %} ({{ d.get('interchange_stops') | join(', ') }}){% endif %}{% endif %}
   {% endfor %}
   {% else %}
-  Inga avgångar hittades.
+  Inga avgångar hittades för `{{ entity }}`.
   {% endif %}
+  {% endmacro %}
+
+  {{ resor('sensor.odenplan_next_departure', 'Slussen') }}
+
+  {{ resor('sensor.odenplan_next_departure_2', 'Cityterminalen') }}
 ```
 
-Byt ut `sensor.odenplan_next_departure` mot din egen sensor. Kortet visar ankomst, restid och byten när slutstation för resa är konfigurerad; annars visas avgångens destination.
+Exemplet använder två Odenplan-sensorer och visar avgångstid, linje, destination eller ankomst, restid och byten när dessa attribut finns.
 
 ### Resor med slutstation
 
@@ -125,18 +132,25 @@ Each stop gets a `Next departure` sensor (timestamp of the next departure). All 
 ```yaml
 type: markdown
 content: |-
-  {% set departures = state_attr('sensor.odenplan_next_departure', 'departures') or [] %}
+  {% macro journeys(entity, heading) %}
+  ### {{ heading }}
+  {% set departures = state_attr(entity, 'departures') or [] %}
   {% if departures %}
-  {% for d in departures %}
-  - **{{ as_timestamp(d.get('expected') or d.get('scheduled')) | timestamp_custom('%H:%M', true) }}** line {{ d.get('line', '?') }}
-    {% if d.get('arrival') %}arrives {{ as_timestamp(d.get('arrival')) | timestamp_custom('%H:%M', true) }} · {{ d.get('duration_minutes') }} min · {{ d.get('interchanges', 0) }} changes{% if d.get('interchange_stops') %} ({{ d.get('interchange_stops') | join(', ') }}){% endif %}{% else %}{{ d.get('destination', '') }}{% endif %}
+  {% for departure in departures %}
+  {% set time = departure.get('expected') or departure.get('scheduled') %}
+  - **{{ as_timestamp(time) | timestamp_custom('%H:%M', true) if time else '--:--' }}** line {{ departure.get('line', '?') }}{% if departure.get('arrival') %} → arrives {{ as_timestamp(departure.get('arrival')) | timestamp_custom('%H:%M', true) }}{% elif departure.get('destination') %} → {{ departure.get('destination') }}{% endif %}{% if departure.get('duration_minutes') is not none %} · {{ departure.get('duration_minutes') }} min{% endif %}{% if departure.get('interchanges') is not none %} · {{ departure.get('interchanges') }} changes{% if departure.get('interchange_stops') %} ({{ departure.get('interchange_stops') | join(', ') }}){% endif %}{% endif %}
   {% endfor %}
   {% else %}
-  No departures found.
+  No departures found for `{{ entity }}`.
   {% endif %}
+  {% endmacro %}
+
+  {{ journeys('sensor.odenplan_next_departure', 'Slussen') }}
+
+  {{ journeys('sensor.odenplan_next_departure_2', 'Cityterminalen') }}
 ```
 
-Replace `sensor.odenplan_next_departure` with your sensor entity ID. The card shows arrival, travel time and changes when a journey end stop is configured; otherwise it shows the departure's destination.
+The example uses two Odenplan sensors and shows departure time, line, destination or arrival, travel time and changes when those attributes are available.
 
 ### Journeys with an end stop
 
