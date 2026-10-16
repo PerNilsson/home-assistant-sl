@@ -24,7 +24,7 @@ Kopiera mappen `custom_components/sl_departures` till `config/custom_components/
    - **Slutstation för resa**: ange en valfri slutstation (t.ex. `Slussen`) för att få resor från vald hållplats dit, även om det inte är linjens ändstation. Sensorn visar då avgång, antal byten och total restid (tomt = vanliga avgångar)
    - **Max antal avgångar**
    - **Tidsfönster** i minuter
-4. Upprepa för fler hållplatser. Samma hållplats kan läggas till flera gånger med olika **Slutstation för resa**; varje post får egna sensorer och heter t.ex. `Mensättra → Slussen`.
+4. Upprepa för fler hållplatser. Samma hållplats kan läggas till flera gånger med olika **Slutstation för resa**; varje post får egna sensorer och heter t.ex. `Odenplan → Slussen`.
 
 ### Ändra hållplats eller filter
 
@@ -49,13 +49,19 @@ Varje hållplats får sensorn `Next departure` (tidsstämpel för nästa avgång
 
 ```yaml
 type: markdown
-content: >
-  {% for d in state_attr('sensor.slussen_next_departure', 'departures') %}
-  **{{ d.line }}** {{ d.destination }} – {{ d.display }}
+content: |-
+  {% set departures = state_attr('sensor.odenplan_next_departure', 'departures') or [] %}
+  {% if departures %}
+  {% for d in departures %}
+  - **{{ as_timestamp(d.get('expected') or d.get('scheduled')) | timestamp_custom('%H:%M', true) }}** linje {{ d.get('line', '?') }}
+    {% if d.get('arrival') %}ankomst {{ as_timestamp(d.get('arrival')) | timestamp_custom('%H:%M', true) }} · {{ d.get('duration_minutes') }} min · {{ d.get('interchanges', 0) }} byten{% if d.get('interchange_stops') %} ({{ d.get('interchange_stops') | join(', ') }}){% endif %}{% else %}{{ d.get('destination', '') }}{% endif %}
   {% endfor %}
+  {% else %}
+  Inga avgångar hittades.
+  {% endif %}
 ```
 
-Byt ut entitets-ID mot din egen sensor.
+Byt ut `sensor.odenplan_next_departure` mot din egen sensor. Kortet visar ankomst, restid och byten när slutstation för resa är konfigurerad; annars visas avgångens destination.
 
 ### Resor med slutstation
 
@@ -93,7 +99,7 @@ Copy the folder `custom_components/sl_departures` to `config/custom_components/`
    - **Journey end stop**: enter any stop (e.g. `Slussen`) to get journeys from the selected stop to it, even if it is not the line's terminus. The sensor then shows departure, number of changes and total travel time (empty = regular departures)
    - **Max departures**
    - **Time window** in minutes
-4. Repeat for more stops. The same stop can be added several times with different **Journey end stop** values; each entry gets its own sensors and is named e.g. `Mensättra → Slussen`.
+4. Repeat for more stops. The same stop can be added several times with different **Journey end stop** values; each entry gets its own sensors and is named e.g. `Odenplan → Slussen`.
 
 ### Change stop or filters
 
@@ -118,13 +124,19 @@ Each stop gets a `Next departure` sensor (timestamp of the next departure). All 
 
 ```yaml
 type: markdown
-content: >
-  {% for d in state_attr('sensor.slussen_next_departure', 'departures') %}
-  **{{ d.line }}** {{ d.destination }} – {{ d.display }}
+content: |-
+  {% set departures = state_attr('sensor.odenplan_next_departure', 'departures') or [] %}
+  {% if departures %}
+  {% for d in departures %}
+  - **{{ as_timestamp(d.get('expected') or d.get('scheduled')) | timestamp_custom('%H:%M', true) }}** line {{ d.get('line', '?') }}
+    {% if d.get('arrival') %}arrives {{ as_timestamp(d.get('arrival')) | timestamp_custom('%H:%M', true) }} · {{ d.get('duration_minutes') }} min · {{ d.get('interchanges', 0) }} changes{% if d.get('interchange_stops') %} ({{ d.get('interchange_stops') | join(', ') }}){% endif %}{% else %}{{ d.get('destination', '') }}{% endif %}
   {% endfor %}
+  {% else %}
+  No departures found.
+  {% endif %}
 ```
 
-Replace the entity ID with your own sensor.
+Replace `sensor.odenplan_next_departure` with your sensor entity ID. The card shows arrival, travel time and changes when a journey end stop is configured; otherwise it shows the departure's destination.
 
 ### Journeys with an end stop
 
