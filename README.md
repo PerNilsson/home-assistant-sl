@@ -2,7 +2,7 @@
 
 Custom integration (HACS) som visar avgångstider för SL i Stockholm. Hållplats och filter ställs in i Home Assistants gränssnitt. Ingen API-nyckel behövs.
 
-Data hämtas varje minut från SL:s öppna API (`transport.integration.sl.se`).
+Data hämtas var 5:e minut från SL:s öppna API (`transport.integration.sl.se`).
 
 ## Installation via HACS
 
@@ -84,7 +84,7 @@ Se [LICENSE](LICENSE).
 
 Custom integration (HACS) that shows departure times for SL in Stockholm. The stop and filters are set in the Home Assistant UI. No API key is needed.
 
-Data is fetched every minute from SL's open API (`transport.integration.sl.se`).
+Data is fetched every 5 minutes from SL's open API (`transport.integration.sl.se`).
 
 ## Installation via HACS
 
