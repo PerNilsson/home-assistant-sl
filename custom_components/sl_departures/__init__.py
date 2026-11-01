@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import random
+from datetime import timedelta
 from typing import Any
 
 import aiohttp
@@ -24,7 +26,9 @@ from .const import (
     DEFAULT_MAX_DEPARTURES,
     DOMAIN,
     JOURNEY_API_BASE,
+    MAX_BACKOFF_SECONDS,
     SCAN_INTERVAL,
+    SCAN_JITTER_SECONDS,
 )
 from .filters import filter_departures, parse_journeys, site_global_id
 
@@ -44,18 +48,33 @@ class SLCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
         )
         self.entry = entry
         self._dest_ids: dict[str, str] = {}
+        self._backoff_seconds = 0.0
+
+    async def _get_json(self, url: str, params: dict[str, Any]) -> Any:
+        session = async_get_clientsession(self.hass)
+        async with session.get(
+            url, params=params, timeout=aiohttp.ClientTimeout(total=15)
+        ) as resp:
+            if resp.status == 429:
+                try:
+                    retry_after = float(resp.headers.get("Retry-After", 0))
+                except ValueError:
+                    retry_after = 0.0
+                self._backoff_seconds = min(
+                    max(retry_after, self._backoff_seconds * 2, SCAN_INTERVAL.total_seconds()),
+                    MAX_BACKOFF_SECONDS,
+                )
+                self.update_interval = timedelta(seconds=self._backoff_seconds)
+                raise UpdateFailed(
+                    f"Rate limited (429), retrying in {int(self._backoff_seconds)} s"
+                )
+            resp.raise_for_status()
+            return await resp.json()
 
     async def _resolve_stop(self, name: str) -> str:
         if name not in self._dest_ids:
-            session = async_get_clientsession(self.hass)
             params = {"name_sf": name, "type_sf": "any", "any_obj_filter_sf": 2}
-            async with session.get(
-                f"{JOURNEY_API_BASE}/stop-finder",
-                params=params,
-                timeout=aiohttp.ClientTimeout(total=15),
-            ) as resp:
-                resp.raise_for_status()
-                data = await resp.json()
+            data = await self._get_json(f"{JOURNEY_API_BASE}/stop-finder", params)
             stops = [loc for loc in data.get("locations", []) if loc.get("type") == "stop"]
             if not stops:
                 raise UpdateFailed(f"Journey destination not found: {name}")
@@ -73,32 +92,31 @@ class SLCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
                 "name_destination": dest_id,
                 "calc_number_of_trips": 3,  # API avvisar > 3
             }
-            session = async_get_clientsession(self.hass)
-            async with session.get(
-                f"{JOURNEY_API_BASE}/trips",
-                params=params,
-                timeout=aiohttp.ClientTimeout(total=15),
-            ) as resp:
-                resp.raise_for_status()
-                data = await resp.json()
+            data = await self._get_json(f"{JOURNEY_API_BASE}/trips", params)
         except (aiohttp.ClientError, TimeoutError) as err:
             raise UpdateFailed(f"Error fetching journeys: {err}") from err
         return parse_journeys(data)
 
     async def _async_update_data(self) -> list[dict[str, Any]]:
+        result = await self._fetch()
+        self._backoff_seconds = 0.0
+        # Jitter så att flera hållplatser inte anropar API:et samtidigt.
+        self.update_interval = SCAN_INTERVAL + timedelta(
+            seconds=random.uniform(0, SCAN_JITTER_SECONDS)
+        )
+        return result
+
+    async def _fetch(self) -> list[dict[str, Any]]:
         conf = {**self.entry.data, **self.entry.options}
         if (conf.get(CONF_JOURNEY_TO) or "").strip():
             return await self._async_update_journeys(conf)
         url = f"{API_BASE}/sites/{conf[CONF_SITE_ID]}/departures"
         params: dict[str, Any] = {"forecast": conf.get(CONF_FORECAST, DEFAULT_FORECAST)}
-        session = async_get_clientsession(self.hass)
         modes = conf.get(CONF_TRANSPORT) or []
         try:
             if len(modes) == 1:
                 params["transport"] = modes[0]
-            async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=15)) as resp:
-                resp.raise_for_status()
-                data = await resp.json()
+            data = await self._get_json(url, params)
         except (aiohttp.ClientError, TimeoutError) as err:
             raise UpdateFailed(f"Error fetching departures: {err}") from err
 
